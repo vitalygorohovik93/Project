@@ -39,8 +39,8 @@
       - kubelet
       - docker.io
 
- ## - name: install_blocked_update_packages
-  #shell: apt-mark hold kubelet kubeadm kubectl  
+ # - name: install_blocked_update_packages
+    #shell: apt-mark hold kubelet kubeadm kubectl  
 
   - name: enable_docker_and_kubelet
     service: name={{ item }} state=started enabled=yes 
@@ -71,9 +71,15 @@
         shell:  kubeadm token create --print-join-command
         run_once: true
         register: join_command
-      - name: debug
-        debug: var=join_command
+
+      - set_fact: kubeadm_join={{ join_command.stdout }}
 
     when: ansible_hostname == "k8s-master"
 
+  - block: # ========> BLOCK FOR K8S-SLAVE1 <==============
+      
+      - name: join slave in cluster
+        shell: "{{ item }}"
+        with_items:  "{{ hostvars['k8s-master']['kubeadm_join'] }}"
   
+    when: ansible_hostname == "k8s-slave1"
