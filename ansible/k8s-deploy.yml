@@ -39,7 +39,7 @@
       - kubelet
       - docker.io
 
- # - name: install_blocked_update_packages
+ ## - name: install_blocked_update_packages
   #shell: apt-mark hold kubelet kubeadm kubectl  
 
   - name: enable_docker_and_kubelet
