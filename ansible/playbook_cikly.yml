@@ -1,0 +1,44 @@
+---
+- name: Install apache2 and upload Web page
+  hosts: all
+  become: yes # root
+
+  vars: # peremennie
+    source_folder: ./Mysite2 #otkuda berem file
+    destin_folder: /var/www/html #kuda neeohodimo polozhit' file
+
+  tasks:
+  - name: Check list Linux version
+    debug: var=ansible_os_family # vizov peremennoy iz ansible setup 
+
+  - block: # block for Debian  # razbienie na bloks
+
+      - name: Install Apache Web Server
+        apt: name=apache2 state=latest # install apache
+
+      - name: STOP NGINX
+        service: name=nginx state=stopped # stop nginx
+      - name: Start Web servers
+        service: name=apache2 state=started enabled=yes # start apache and avto start before restart 
+
+    when: ansible_os_family == "Debian" #  when nuzhen dly ukazaniy k kokoy peremennoy otnositsy primrnrnie block i commands
+
+
+
+  - name: Copy Mysite to Servers
+#    copy: src={{ source_folder }}/{{ item }} dest={{ destin_folder }} mode=0555 # cope s primineniem cikla
+    copy: src={{ item }} dest={{ destin_folder }} mode=0555 
+    with_fileglob: "{{ source_folder }}/*.*" # copy vseh files nahodyshxihsy v directory
+
+#    loop: #vizov cikla
+ #         - "index.html"
+  #        - "3130470.png"
+   #       - "480e78efa3f7ec7b14e96442d729f70b.jpeg"
+    #      - "93ce315d371a89aaa02f583492d16e0b.jpeg"
+    notify: Restart Apache Debian
+
+
+  handlers:
+  - name: Restart Apache Debian
+    service: name=apache2 state=restarted
+    when: ansible_os_family == "Debian"

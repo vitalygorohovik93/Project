@@ -1,0 +1,10 @@
+---  # naxhalo yml
+- name: Test connections to my Server
+  hosts: all
+  become: yes  # iz pod root
+
+
+  tasks:  # vipolyeyie 
+  - name: Ping my servers # name task
+    ping: # ping hosts
+...

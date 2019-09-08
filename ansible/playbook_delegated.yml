@@ -1,0 +1,50 @@
+---
+- name: Playbook include and import
+  hosts: all
+  become: yes
+
+  vars: 
+   mytext: "Privet Vitaly"
+
+  tasks:
+  - name: Ping test
+    ping:
+  
+  - name: Unregister Server from Load Balancer
+    shell: echo This server {{ inventory_hostname }} was deregistred from our Load Balancer, node name is {{ ansible_nodename  }} >> /home/log.txt # zapis inventory and nodename v log.txt
+    delegate_to: 127.0.0.1   # vipolnenie taska tolko na ansible master
+  
+  - name: Update my Databases
+    shell: echo UPDATING Database...
+    run_once: true # esli cammands neobhodimo zapystit only 1 raz and tolko na odnom servere  
+ 
+  - name: Create file3
+    copy: 
+      dest: /home/file3.txt #directory keda sozdat' file
+      content: | # soderzhimoe file
+        This is file3
+        On English Hello world
+        On Russian {{ mytext }} 
+    delegate_to: linux1 # sozdanie file only linux1    
+
+  - name: Create file4
+    copy:
+      dest: /home/file4.txt
+      content: |
+        This is file4
+        On English Hello woeld
+        On Russian {{ mytext }}
+   
+  - name: Reboot my servers
+    shell: sleep 3 && reboot now # sleep -  wait before restart
+    async: 1 # timeout before synhronazed
+    poll: 0 # start now command
+
+  - name: Wait till my servers will come up online
+    wait_for: # peremennay dly ozhidaniy zapuska services
+       host: "{{ inventory_hostname }}"  
+       state: started 
+       delay: 5 # cherez skolko nachinat zhdat'
+       timeout: 40 # skolko zhdat' max time
+    delegate_to: 127.0.0.1
+

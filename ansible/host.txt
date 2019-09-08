@@ -1,0 +1,11 @@
+[staging]
+
+
+[prod]
+k8s-master ansible_host=192.168.61.3
+k8s-slave1 ansible_host=192.168.61.4 
+
+[servers_all:children]
+staging
+prod
+

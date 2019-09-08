@@ -1,0 +1,23 @@
+---
+- name: k8s_remove
+  hosts: all
+  become: yes
+
+  tasks:
+  - name: K8s reset
+    shell: kubeadm reset --force
+    ignore_errors: True
+  - name: remove all packeges k8s
+    apt: name={{ item }} state=absent autoremove=yes
+    loop:
+      - docker.io
+      - kubeadm
+      - kubectl
+      - kubelet
+      - kubernetes-cni
+      - kube*
+  
+  - name: Delete .kube
+    shell: rm -rf ~/.kube && rm -rf /root/.kube
+
+...    

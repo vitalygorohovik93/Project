@@ -1,0 +1,32 @@
+---
+- name: Install apache2 and upload Web page
+  hosts: all
+  become: yes # root
+
+  vars: # peprmenie
+    source_file: ./Mysite/index.html #dirictory otkyda berem
+    destin_file: /var/www/html #dirictory kyda neobhodimo skopirovat'
+
+  tasks:
+  - name: Check list Linux version
+    debug: var=ansible_os_family  #vibor peremennoy iz ansible setup
+
+  - block: # block for Debian  # razbienie na bloki
+
+      - name: Install Apache Web Server
+        apt: name=apache2 state=latest
+
+      - name: Copy Mysite to Servers
+        copy: src={{ source_file }} dest={{ destin_file }} mode=0555 # copy iz source v destenetion
+        notify: Restart Apache # primenenie handlers
+      - name: STOP NGINX
+        service: name=nginx state=stopped #stop nginx
+      - name: Start Web servers
+        service: name=apache2 state=started enabled=yes 
+
+    when: ansible_os_family == "Debian" # when nuzhen dly ukazaniy k kokoy peremennoy otnositsy primrnrnie block i commands
+
+  handlers: # slyzhit dla primeneniy deistviy pri opredelennih obstoytelstvah
+  - name: Restart Apache
+    service: name=apache2 state=restarted
+

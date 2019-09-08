@@ -1,0 +1,37 @@
+---
+# tasks file for deploy_apache_web
+- block: #=========>BLOCK for Redhat<==========
+      - name: Install Apache
+        yum: name=httpd state=installed
+      - name: Stop Nginx
+        service: name=nginx state=stopped
+      - name: Start Apache
+        service: name=httpd state=started enabled=yes
+  when: ansible_os_family == "RedHat"
+
+- block: #=========>BLOCK for UBUNTU<==========
+      - name: Install Apache
+        apt: name=apache2 state=installed
+      - name: Stop Nginx
+        service: name=nginx state=stopped
+      - name: Start Apache
+        service: name=apache2 state=started enabled=yes
+  when: ansible_os_family == "Debian"
+
+
+- name: Generated Index.html file
+  template: src=index.j2 dest={{ destin_folder }}/index.html mode=0555 # vizov shablona
+  notify:
+      -  Restart Apache RedHat
+      -  Restart Apache Ubuntu
+
+- name: copy index.html
+  copy: src={{ item }} dest={{ destin_folder }} mode=0555
+  loop:
+      - "3130470.png"
+      - "480e78efa3f7ec7b14e96442d729f70b.jpeg"
+      - "93ce315d371a89aaa02f583492d16e0b.jpeg"
+  notify:
+      -  Restart Apache RedHat
+      -  Restart Apache Ubuntu
+

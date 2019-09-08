@@ -1,0 +1,8 @@
+---
+- name: Install web server 
+  hosts: "{{ MYHOSTS }}" # ispolzyem dly vnrshnih peremennih
+  become: yes
+
+
+  roles: 
+  - role: deploy_apache_web

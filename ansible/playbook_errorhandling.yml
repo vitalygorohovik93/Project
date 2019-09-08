@@ -1,0 +1,30 @@
+---
+- name: Ansible Lesson 19 Errorhendling
+  hosts: all
+  any_errors_fatal: true # lubay oshibka fatal'na
+  become: yes
+
+
+  tasks:
+  - name: Install packages
+    yum: name=treeeee state=latest
+    ignore_errors: yes  # ignoriryem oshibki  
+  
+  - name: task2 # esli na odnom servere est' danni file , to na nem prodolzhat vipoln'9ts9 dalneishie tasks. na drugih prekrat9ts9 vipolnenie tasks ( esli net any_errors_fatal: true)
+    shell: cat /home/ubuntu/myfile.txt 
+    register: results
+
+  - name: task 2.1
+    shell: echo Hello World
+    register: results # regestriruem output 
+#    failed_when: results.rc == 0 # zapusk faild esli rc = 0
+#    failed_when: "'World' in results.stdout" # zapusk faild ecli est' World v stdout    
+ 
+  - debug: # vivod na ekran
+      var: results
+
+  - name: task 3
+    shell: echo Privet Mir!!!
+
+
+

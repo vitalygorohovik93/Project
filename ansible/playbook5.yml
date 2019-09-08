@@ -1,0 +1,30 @@
+---
+- name: Loops playbook
+  hosts: linux2
+  become: yes
+
+  tasks:
+  
+  - name: Say Hello to All
+    debug: msg="Hello {{ item }}" # item slyzhit dly ciklov
+    loop: # vizov cikla
+     - "Viatly"
+     - "Oly"
+     - "Koly"
+
+  - name: Loop untill 
+    shell: echo -n Z >> myfile.txt && cat myfile.txt # zapis' v file
+    register: output 
+    delay: 2 # zadirzhka v sek
+    retries: 10 # vipolnenie kolichestvo raz
+    until: output.stdout.find("ZZZZ") == false # ozhidani zapisi Z v file. until - do togo kak
+    
+  - name: Print Output
+    debug: # vizov peremennoy
+       var: output.stdout
+ 
+  - name: Insatll many packaged
+    apt: name={{ item }} state=installed # install spiska programm
+    loop: # zapysk cikla
+     - vim
+     - mysql-client
