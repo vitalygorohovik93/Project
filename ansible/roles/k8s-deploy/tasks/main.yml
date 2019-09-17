@@ -1,0 +1,86 @@
+---
+# tasks file for k8s-deploy
+
+  - name: check_hostname_servers
+    debug: var=ansible_hostname
+  
+  - name: swap_off
+    shell: swapoff -a #&& sed -i '/swap/ s/^/#/' /etc/fstab
+
+  - name: Disable SWAP in fstab since kubernetes can't work with swap enabled
+    replace:
+      path: /etc/fstab
+      regexp: '^(.+?\sswap\s+sw\s+.*)$'
+      replace: '# \1'
+
+  - name: Update all packages to the latest version
+    apt:
+      upgrade: dist
+
+  - name: Upgrade all packages to the latest version
+    apt:
+      name: "*"
+      state: latest
+    
+  - name: add_GPCkey_and_repository_for_install_kubelet_kubeadm_kubctl
+    shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+  - name: update_packages 
+    apt:
+      upgrade: dist
+   
+  - name: update_cash_packages 
+    shell: apt-cache policy kubelet   
+  
+  - name: install_kubelet_kubeadm_kubctl
+    apt: name={{ item }} state=latest
+    loop:
+      - kubectl
+      - kubeadm
+      - kubelet
+      - docker.io
+
+ # - name: install_blocked_update_packages
+    #shell: apt-mark hold kubelet kubeadm kubectl  
+
+  - name: enable_docker_and_kubelet
+    service: name={{ item }} state=started enabled=yes 
+    loop:
+    - docker
+    - kubelet
+  - block: # =======>> BLOCK FOR K8S-MASTER <<=========
+    
+      - name: initialization_master_server
+        shell: kubeadm init --apiserver-advertise-address=192.168.61.3 --pod-network-cidr=172.168.10.0/24
+
+      - name: add_directory
+        shell: mkdir -p $HOME/.kube
+
+      - name: copy config
+        shell: cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+      - name: chown
+        shell: chown $(id -u):$(id -g) $HOME/.kube/config
+      
+      - name: install_rbac-kdd
+        shell: kubectl apply -f rbac-kdd.yaml  
+      
+      - name: install_ callico
+        shell: kubectl apply -f calico.yaml 
+
+      - name: join_k8s-slave1
+        shell:  kubeadm token create --print-join-command
+        run_once: true
+        register: join_command
+
+      - set_fact: kubeadm_join={{ join_command.stdout }}
+
+    when: ansible_hostname == "k8s-master"
+
+  - block: # ========> BLOCK FOR K8S-SLAVE1 <==============
+      
+      - name: join slave in cluster
+        shell: "{{ item }}"
+        with_items:  "{{ hostvars['k8s-master']['kubeadm_join'] }}"
+  
+    when: ansible_hostname == "k8s-slave1"

@@ -1,6 +1,6 @@
 ---
 - name: Install default apache2
-  hosts: all
+  hosts: k8s-master
   become: yes # root
 
   tasks:
