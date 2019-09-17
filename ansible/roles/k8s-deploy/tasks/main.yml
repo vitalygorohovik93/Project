@@ -51,7 +51,7 @@
   - block: # =======>> BLOCK FOR K8S-MASTER <<=========
     
       - name: initialization_master_server
-        shell: kubeadm init --apiserver-advertise-address=192.168.61.3 --pod-network-cidr=172.168.10.0/24
+        shell: kubeadm init --apiserver-advertise-address="{{ ansible_host }}" --pod-network-cidr=172.168.10.0/24
 
       - name: add_directory
         shell: mkdir -p $HOME/.kube
@@ -62,11 +62,24 @@
       - name: chown
         shell: chown $(id -u):$(id -g) $HOME/.kube/config
       
+      - name: Create manifest folder
+        file:
+          path: /root/manifest
+          state: directory
+          mode: 0755
+
+      - name: Copy manifest in folder
+        copy: src={{ item }}  dest={{ destin_folder }} mode=0555
+        loop:
+           - "calico.yaml"
+           - "rbac-kdd.yaml"   
+
+
       - name: install_rbac-kdd
-        shell: kubectl apply -f rbac-kdd.yaml  
+        shell: kubectl apply -f /root/manifest/rbac-kdd.yaml  
       
       - name: install_ callico
-        shell: kubectl apply -f calico.yaml 
+        shell: kubectl apply -f /root/manifest/calico.yaml 
 
       - name: join_k8s-slave1
         shell:  kubeadm token create --print-join-command
